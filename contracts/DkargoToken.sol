@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity >=0.6.0;
 
 import "./DkargoPrefix.sol";
 import "./authority/Ownership.sol";
@@ -24,7 +24,7 @@ contract DkargoToken is Ownership, ERC20Safe, ERC165, DkargoPrefix {
     /// @param name 토큰 이름
     /// @param symbol 토큰 심볼
     /// @param supply 초기 발행량
-    constructor(string memory name, string memory symbol, uint256 supply) ERC20Safe(supply) public {
+    constructor(string memory name, string memory symbol, uint256 supply) ERC20Safe(supply) {
         _setDkargoPrefix("token"); // 프리픽스 설정 (token)
         _registerInterface(0x946edbed); // INTERFACE ID 등록 (getDkargoPrefix)
         _name = name;

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity >=0.6.0;
 
 /// @title Strings
 /// @dev 스트링 타입 변수에 대한 제어/검사를 위한 라이브러리

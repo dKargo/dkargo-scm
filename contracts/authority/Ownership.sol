@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity >=0.6.0;
 
 /// @title Onwership
 /// @dev 오너 확인 및 소유권 이전 처리
@@ -17,7 +17,7 @@ contract Ownership {
     }
 
     /// @notice 컨트랙트 생성자이다.
-    constructor() internal {
+    constructor() {
         emit OwnershipTransferred(_owner, msg.sender);
         _owner = msg.sender;
     }

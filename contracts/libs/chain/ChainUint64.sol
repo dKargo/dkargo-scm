@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity >=0.6.0;
 
 import "./Typedef.sol";
 import "../math/SafeMath256.sol";

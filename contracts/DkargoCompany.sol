@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity >=0.6.0;
 
 import "./DkargoPrefix.sol";
 import "./authority/Operatorship.sol";
@@ -28,7 +28,7 @@ contract DkargoCompany is Operatorship, ERC165, DkargoPrefix {
     /// @param url 물류사 상세정보가 저장된 URL (string)
     /// @param recipient 인센티브 수취인 주소
     /// @param service 서비스 컨트랙트 주소
-    constructor(string memory name, string memory url, address recipient, address service) public {
+    constructor(string memory name, string memory url, address recipient, address service) {
         _setDkargoPrefix("company"); // 프리픽스 설정
         _registerInterface(0x946edbed); // INTERFACE ID 등록 (getDkargoPrefix)
         _name = name;

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity >=0.6.0;
 
 /// @title DkargoPrefix
 /// @notice 디카르고 컨트랙트 여부 식별용 prefix 컨트랙트 정의

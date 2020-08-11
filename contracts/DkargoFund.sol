@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity >=0.6.0;
 
 import "./DkargoPrefix.sol";
 import "./authority/Ownership.sol";
@@ -41,7 +41,7 @@ contract DkargoFund is Ownership, ERC165, DkargoPrefix {
     /// @notice 컨트랙트 생성자이다.
     /// @param token 토큰 컨트랙트 주소
     /// @param beneficier 수취인 주소
-    constructor(address token, address beneficier) public {
+    constructor(address token, address beneficier) {
         require(token != address(0), "DkargoFund: token is null");
         require(beneficier != address(0), "DkargoFund: beneficier is null");
         _setDkargoPrefix("fund"); // 프리픽스 설정 (fund)

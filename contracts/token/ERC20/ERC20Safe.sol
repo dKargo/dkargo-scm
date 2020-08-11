@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity >=0.6.0;
 
 import "./ERC20.sol";
 import "../../libs/math/SafeMath256.sol";
@@ -12,7 +12,7 @@ contract ERC20Safe is ERC20 {
 
     /// @notice 컨트랙트 생성자이다.
     /// @param supply 초기 발행량
-    constructor(uint256 supply) ERC20(supply) public {
+    constructor(uint256 supply) ERC20(supply) {
     }
 
     /// @notice 계정(spender)에게 통화량(amount)을 위임한다.

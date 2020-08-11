@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity >=0.6.0;
 
 import "./IERC20.sol";
 import "../../libs/math/SafeMath256.sol";
@@ -16,7 +16,7 @@ contract ERC20 is IERC20 {
 
     /// @notice 컨트랙트 생성자이다.
     /// @param supply 초기 발행량
-    constructor(uint256 supply) internal {
+    constructor(uint256 supply) {
         _mint(msg.sender, supply);
     }
 

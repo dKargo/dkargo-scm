@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity >=0.6.0;
 
 import "./DkargoPrefix.sol";
 import "./introspection/ERC165/ERC165.sol";
@@ -55,7 +55,7 @@ contract DkargoOrder is ERC165, DkargoPrefix {
                 address service,
                 address[] memory members,
                 uint256[] memory codes,
-                uint256[] memory incentives) public {
+                uint256[] memory incentives) {
         require(service != address(0), "DkargoOrder: the service cannot be the zero");
         require(service.isContract() == true, "DkargoOrder: the service is not contract");
         require(members.length > 1, "DkargoOrder: too few members");

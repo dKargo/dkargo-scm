@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity >=0.6.0;
 
 /// @title Typedef
 /// @dev 각 Chain 라이브러리에서 다룰 data type 정의

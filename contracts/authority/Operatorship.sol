@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity >=0.6.0;
 
 import "./Ownership.sol";
 import "../libs/Roles.sol";
@@ -23,7 +23,7 @@ contract Operatorship is Ownership {
     }
 
     /// @notice 컨트랙트 생성자이다.
-    constructor() internal {
+    constructor() {
         _operators.add(msg.sender);
         emit OperatorAdded(msg.sender);
     }

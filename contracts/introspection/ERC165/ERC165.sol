@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity >=0.6.0;
 
 import "./IERC165.sol";
 
@@ -12,7 +12,7 @@ contract ERC165 is IERC165 {
 
     /// @notice 컨트랙트 생성자이다.
     /// @dev bytes4(keccak256('supportsInterface(bytes4)')) == 0x01ffc9a7
-    constructor() internal {
+    constructor() {
         _registerInterface(0x01ffc9a7); // supportsInterface()의 INTERFACE ID 등록
     }
 

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity >=0.6.0;
 
 import "./DkargoPrefix.sol";
 import "./authority/Ownership.sol";
@@ -72,7 +72,7 @@ contract DkargoService is Ownership, ERC165, DkargoPrefix {
     event Settled(address indexed addr, uint256 value, uint256 rests);
 
     /// @notice 컨트랙트 생성자이다.
-    constructor() public {
+    constructor() {
         _setDkargoPrefix("service"); // 프리픽스 설정
         _registerInterface(0x946edbed); // INTERFACE ID 등록 (getDkargoPrefix)
     }
