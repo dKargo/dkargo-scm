@@ -133,7 +133,7 @@ contract DkargoOrder is ERC165, DkargoPrefix {
     /// @dev 배송종료(_done == true) 상태이고, 마지막 트래킹 코드가 TRACKCODE_COMPLETE 여야 한다.
     /// @return 주문의 정상 배송완료 여부 (bool), true: O, false: X
     function isComplete() public view returns(bool) {
-        return ((_done == true) && (_curstep == _tracking.length) && (_tracking[_curstep].code == TRACKCODE_COMPLETE))? (true) : (false);
+        return ((_done == true) && (_tracking[_curstep].code == TRACKCODE_COMPLETE))? (true) : (false);
     }
 
     /// @notice 주문이 현재 처리되고 있는 구간의 추적 정보를 얻어온다.
