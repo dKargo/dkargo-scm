@@ -1,0 +1,20 @@
+{
+  "name": "dkargodev",
+  "version": "1.0.0",
+  "description": "dkargo platform development",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "dkargo",
+    "logistics",
+    "blockchain"
+  ],
+  "author": "jhhong",
+  "license": "MIT",
+  "dependencies": {
+    "remixd": "^0.2.3-alpha.3",
+    "truffle": "^5.1.34"
+  }
+}
