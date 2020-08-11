@@ -91,7 +91,7 @@ contract DkargoService is Ownership, ERC165, DkargoPrefix {
         _orders[_ordercnt] = order; // "주문번호"에 해당하는 매퍼에 주문 컨트랙트 주소 등록
         _setOrderId(order, _ordercnt); // 주문 컨트랙트에 주문번호를 부여
         emit OrderCreated(order, _ordercnt); // 이벤트 발생: 주문생성
-        address nextMember = _getNextMember(order); // 주문의 다음 배송 담당자 값 획득
+        address nextMember = _getCurrentTracking(order); // 주문의 다음 배송 담당자 값 획득
         emit OrderTransferred(order, reporter, nextMember, 1); // 이벤트 발생: 주문 상태갱신
     }
 
@@ -106,24 +106,27 @@ contract DkargoService is Ownership, ERC165, DkargoPrefix {
         require(msg.sender == order, "DkargoService: only the order itself can call");
         uint256 trackingcnt = _getTrackingCount(order);
         require(trackingcnt > 1, "DkargoService: the order has too few members"); // 최소 트래킹 개수는 2!!(화주+물류사1)
-        address nextMember = _getNextMember(order); // 주문의 다음 배송 담당자 값 획득
-        emit OrderTransferred(order, reporter, nextMember, transportid); // 이벤트 발생: 주문 상태갱신
-        //////////////// 인센티브 배분
-        if(_isOrderComplete(order) == true) { // 성공적으로 배송완료된 주문이라면...화주와 참여 물류사들의 인센티브 갱신 + 참여 물류사들의 평점 갱신
-            (address shipper, uint256 incentive) = _getTracking(order, 0); // 화주의 주소와 인센티브 정보 추출
-            _incentives[shipper].totals = (_incentives[shipper].totals).add(incentive); // 화주의 인센티브 갱신
-            emit IncentiveUpdated(shipper, incentive); // 이벤트 발생: 인센티브 갱신 (화주)
-            if(_recipientchain.isLinked(shipper) == false && _incentives[shipper].totals > 0) {
-                _recipientchain.linkChain(shipper); // 인센티브 수령대상자 체인 연결
-            }
-            for(uint256 idx = 1; idx < trackingcnt; idx++) { // 배송에 참여한 모든 물류사들에 대해서
-                (address company, uint256 incentivee) = _getTracking(order, idx); // 물류사 주소와 인센티브 정보 추출
-                _degree[company].success = _degree[company].success.add(1); // 물류사 평점 갱신
-                address recipient = _getRecipient(company); // 물류사의 수취인 주소 추출
-                _incentives[recipient].totals = (_incentives[recipient].totals).add(incentivee); // 물류사 인센티브 갱신
-                emit IncentiveUpdated(recipient, incentivee); // 이벤트 발생: 인센티브 갱신 (물류사)
-                if(_recipientchain.isLinked(recipient) == false && _incentives[recipient].totals > 0) {
-                    _recipientchain.linkChain(recipient); // 인센티브 수령대상자 체인 연결
+        address nextMember = _getCurrentTracking(order); // 주문의 다음 배송 담당자 값 획득
+        if(_isOrderFailed(order) == false) { // 차후 배송실패에 따른 패널티 적용 정책이 확정되면 _isOrderFailed(order) == true일 때의 코드 작업 추가 필요
+            emit OrderTransferred(order, reporter, nextMember, transportid); // 이벤트 발생: 주문 상태갱신
+            if(_isOrderComplete(order) == true) { // 성공적으로 배송완료된 주문: 인센티브 갱신 + 물류사 평점 갱신
+                //// 화주 인센티브 갱신
+                (address shipper, uint256 incentive) = _getTracking(order, 0); // 화주의 주소와 인센티브 정보 추출
+                _incentives[shipper].totals = (_incentives[shipper].totals).add(incentive); // 화주의 인센티브 갱신
+                emit IncentiveUpdated(shipper, incentive); // 이벤트 발생: 인센티브 갱신 (화주)
+                if(_recipientchain.isLinked(shipper) == false && _incentives[shipper].totals > 0) {
+                    _recipientchain.linkChain(shipper); // 인센티브 수령대상자 체인 연결
+                }
+                //// 물류사 인센티브 갱신 + 물류사 평점 갱신
+                for(uint256 idx = 1; idx < trackingcnt; idx++) { // 배송에 참여한 모든 물류사들에 대해서
+                    (address company, uint256 incentivee) = _getTracking(order, idx); // 물류사 주소와 인센티브 정보 추출
+                    _degree[company].success = _degree[company].success.add(1); // 물류사 평점 갱신
+                    address recipient = _getRecipient(company); // 물류사의 수취인 주소 추출
+                    _incentives[recipient].totals = (_incentives[recipient].totals).add(incentivee); // 물류사 인센티브 갱신
+                    emit IncentiveUpdated(recipient, incentivee); // 이벤트 발생: 인센티브 갱신 (물류사)
+                    if(_recipientchain.isLinked(recipient) == false && _incentives[recipient].totals > 0) {
+                        _recipientchain.linkChain(recipient); // 인센티브 수령대상자 체인 연결
+                    }
                 }
             }
         }
@@ -255,10 +258,11 @@ contract DkargoService is Ownership, ERC165, DkargoPrefix {
         return _ordercnt;
     }
 
-    /// @notice 주문의 다음 배송 담당자를 얻어온다.
+    /// @notice 주문 컨트랙트의 현재 트래킹 정보를 얻어온다.
+    /// @dev 현재 다른 정보는 사용되지 않으므로 addr만 반환함
     /// @param order 주문 컨트랙트 주소
-    /// @return addr 주문의 다음 배송 담당자
-    function _getNextMember(address order) private view returns(address addr) {
+    /// @return addr 주문의 현재 배송 담당자
+    function _getCurrentTracking(address order) private view returns(address addr) {
         bytes memory data = address(order)._vcall(abi.encodeWithSignature("currentTracking()"));
         (,addr,,) = abi.decode(data, (uint64, address, uint256, uint256));
     }
@@ -271,7 +275,7 @@ contract DkargoService is Ownership, ERC165, DkargoPrefix {
     }
 
     /// @notice 주문 컨트랙트의 트래킹 정보 중 index에 해당하는 트래킹 정보를 얻어온다.
-    /// @dev unused variable warning 때문에 time과 code 정보는 반환하지 않음. 차후에 필요해질 경우를 대비해서 function name은 그대로 둠
+    /// @dev 현재 다른 정보는 사용되지 않으므로 addr, incentive만 반환함
     /// @param order 주문 컨트랙트 주소
     /// @param index 트래킹 인덱스
     /// @return addr 트래킹을 추가한 주소(address)
@@ -294,6 +298,14 @@ contract DkargoService is Ownership, ERC165, DkargoPrefix {
     /// @return 배송이 성공적으로 완료되었는지의 여부
     function _isOrderComplete(address order) private view returns(bool) {
         bytes memory data = address(order)._vcall(abi.encodeWithSignature("isComplete()"));
+        return abi.decode(data, (bool));
+    }
+
+    /// @notice 배송이 종료된 주문 컨트랙트인지 확인
+    /// @param order 주문 컨트랙트 주소
+    /// @return 배송이 성공적으로 완료되었는지의 여부
+    function _isOrderFailed(address order) private view returns(bool) {
+        bytes memory data = address(order)._vcall(abi.encodeWithSignature("isFailed()"));
         return abi.decode(data, (bool));
     }
 

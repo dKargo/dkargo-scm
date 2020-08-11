@@ -53,7 +53,7 @@ contract DkargoCompany is Operatorship, ERC165, DkargoPrefix {
     /// @param order 주문 컨트랙트 주소
     /// @param transportid 운송번호 (구간배송번호)
     function launch(address order, uint256 transportid) onlyOperator public {
-        _todolist[order][transportid] =true; // 주문접수(todolist 갱신)
+        _todolist[order][transportid] = true; // 주문접수(todolist 갱신)
         if(_orderchain.isLinked(order) == false) {
             _orderchain.linkChain(order); // 물류사체인에 주문등록
         }

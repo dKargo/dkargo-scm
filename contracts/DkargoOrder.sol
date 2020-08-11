@@ -43,6 +43,7 @@ contract DkargoOrder is ERC165, DkargoPrefix {
     uint256 constant private TRACKCODE_FLIGHT = 40; // 항공
     uint256 constant private TRACKCODE_LASTMILE = 60; // 도착지 운송 시작
     uint256 constant private TRACKCODE_COMPLETE = 70; // 배송 완료
+    uint256 constant private TRACKCODE_FAILED = 99; // 배송 실패 (차후 실패 이유에 따른 코드 분리 고려)
 
     /// @notice 컨트랙트 생성자이다.
     /// @param url 물류 상세정보가 저장된 URL (string)
@@ -106,28 +107,33 @@ contract DkargoOrder is ERC165, DkargoPrefix {
         require(msg.sender == _tracking[_curstep].member, "DkargoOrder: unauthorized caller");
         require(_done == false, "DkargoOrder: the order has aleady been completed.");
         _onlyValidCode(code);
-        //// 배송 실패될 경우에 대한 처리: _done = true
-        require(_tracking[_curstep].code == code, "DkargoOrder: code is out of order");
-        _tracking[_curstep].time = time;
-        _curstep = _curstep.add(1); // 배송 step 한단계 증가 (다음 step)
-        if(_curstep == _tracking.length) { // 배송 종료 시 처리
+        if(code == TRACKCODE_FAILED) { // 배송 실패 처리
+            _tracking[_curstep].code = TRACKCODE_FAILED;
             _done = true;
+        } else { // 정상 배송완료 처리
+            require(_tracking[_curstep].code == code, "DkargoOrder: code is out of order");
+            _tracking[_curstep].time = time;
+            _curstep = _curstep.add(1); // 배송 step 한단계 증가 (다음 step)
+            if(_curstep == _tracking.length) { // 배송 종료 시 처리
+                _tracking.push(Tracking({time: time, member: address(0), code: TRACKCODE_COMPLETE, incentive: 0})); // 배송완료 상태 추가
+                _done = true;
+            }
         }
         _approveOrderUpdate(msg.sender, _curstep); // 서비스 컨트랙트로부터의 승인(approveOrderUpdate) 요청
     }
 
-    /// @notice 주문의 배송종료 여부를 확인한다.
-    /// @return 주문의 배송종료 여부 (bool), true: 배송종료, false: 배송진행중
-    function isDone() public view returns(bool) {
-        return _done;
+    /// @notice 주문이 배송실패 되었는지의 여부를 확인한다.
+    /// @dev 배송종료(_done == true) 상태이고, 마지막 트래킹 코드가 TRACKCODE_FAILED 여야 한다.
+    /// @return 주문의 배송실패 여부 (bool), true: O, false: X
+    function isFailed() public view returns(bool) {
+        return ((_done == true) && (_tracking[_curstep].code == TRACKCODE_FAILED))? (true) : (false);
     }
 
     /// @notice 주문이 정상적으로 배송완료 되었는지의 여부를 확인한다.
     /// @dev 배송종료(_done == true) 상태이고, 마지막 트래킹 코드가 TRACKCODE_COMPLETE 여야 한다.
     /// @return 주문의 정상 배송완료 여부 (bool), true: O, false: X
     function isComplete() public view returns(bool) {
-        uint256 lastidx = _tracking.length - 1;
-        return ((_done == true) && (_curstep == _tracking.length) && (_tracking[lastidx].code == TRACKCODE_COMPLETE))? (true) : (false);
+        return ((_done == true) && (_curstep == _tracking.length) && (_tracking[_curstep].code == TRACKCODE_COMPLETE))? (true) : (false);
     }
 
     /// @notice 주문이 현재 처리되고 있는 구간의 추적 정보를 얻어온다.
