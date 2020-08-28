@@ -136,6 +136,12 @@ contract DkargoOrder is ERC165, DkargoPrefix {
         return ((_done == true) && (_tracking[_curstep].code == TRACKCODE_COMPLETE))? (true) : (false);
     }
 
+    /// @notice 주문이 현재 처리되고 있는 구간 인덱스를 얻어온다.
+    /// @return 주문이 현재 처리되고 있는 구간 인덱스
+    function currentStep() public view returns(uint256) {
+        return _curstep;
+    }
+
     /// @notice 주문이 현재 처리되고 있는 구간의 추적 정보를 얻어온다.
     /// @return time 트래킹 시각
     /// @return addr 트래킹 수행주체
