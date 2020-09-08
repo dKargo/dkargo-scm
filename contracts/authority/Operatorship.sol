@@ -12,8 +12,12 @@ contract Operatorship is Ownership {
 
     Roles.Role private _operators; // operator 정보 저장을 위한 변수 (Roles.Role)
 
-    // 이벤트 선언
+    /// @notice 운영자 추가 이벤트
+    /// @param account 추가될 운영자 주소
     event OperatorAdded(address indexed account);
+
+    /// @notice 운영자 제거 이벤트
+    /// @param account 제거될 운영자 주소
     event OperatorRemoved(address indexed account);
 
     /// @notice 운영자만 접근할 수 있음을 명시한다.

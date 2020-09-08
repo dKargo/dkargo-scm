@@ -12,8 +12,12 @@ contract Whitelist is Ownership {
 
     Roles.Role private _whitelist; // whitelist 정보 저장을 위한 변수 (Roles.Role)
 
-    // 이벤트 선언
+    /// @notice 화이트리스트 추가 이벤트
+    /// @param account 화이트리스트에 추가될 주소
     event WhitelistAdded(address indexed account);
+
+    /// @notice 화이트리스트 제거 이벤트
+    /// @param account 화이트리스트에서 제거될 주소
     event WhitelistRemoved(address indexed account);
 
     /// @notice 화이트리스트 맴버들만 접근할 수 있음을 명시한다.

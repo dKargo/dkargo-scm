@@ -45,6 +45,11 @@ contract DkargoOrder is ERC165, DkargoPrefix {
     uint256 constant private TRACKCODE_COMPLETE = 70; // 배송 완료
     uint256 constant private TRACKCODE_FAILED = 99; // 배송 실패 (차후 실패 이유에 따른 코드 분리 고려)
 
+    /// @notice 주문 상세정보 URL변경 이벤트
+    /// @param oldUrl 주문 상세정보 이전 URL
+    /// @param newUrl 주문 상세정보 변경된 URL
+    event OrderUrlSet(string oldUrl, string newUrl);
+
     /// @notice 컨트랙트 생성자이다.
     /// @param url 물류 상세정보가 저장된 URL (string)
     /// @param service 서비스 컨트랙트 주소
@@ -87,6 +92,7 @@ contract DkargoOrder is ERC165, DkargoPrefix {
     /// @param url 갱신될 URL
     function setUrl(string memory url) public {
         require(msg.sender == _tracking[0].member, "DkargoOrder: only shipper can call");
+        emit OrderUrlSet(_url, url);
         _url = url;
     }
 

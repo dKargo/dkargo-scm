@@ -23,6 +23,21 @@ contract DkargoCompany is Operatorship, ERC165, DkargoPrefix {
     mapping(address => mapping(uint256 => bool)) private _todolist; // 접수되어 처리해야 할 주문정보
     Typedef.AddressList private _orderchain; // 주문 체인 (물류사 관할)
 
+    /// @notice 물류사 이름변경 이벤트
+    /// @param oldName 물류사 이전 이름
+    /// @param newName 물류사 변경된 이름
+    event CompanyNameSet(string oldName, string newName);
+
+    /// @notice 물류사 URL변경 이벤트
+    /// @param oldUrl 물류사 이전 URL
+    /// @param newUrl 물류사 변경된 URL
+    event CompanyUrlSet(string oldUrl, string newUrl);
+
+    /// @notice 물류사 수취인주소 변경 이벤트
+    /// @param oldRecipient 물류사 이전 수취인주소
+    /// @param newRecipient 물류사 변경된 수취인주소
+    event CompanyRecipientSet(address oldRecipient, address newRecipient);
+
     /// @notice 컨트랙트 생성자이다.
     /// @param name 물류사 이름
     /// @param url 물류사 상세정보가 저장된 URL (string)
@@ -75,6 +90,7 @@ contract DkargoCompany is Operatorship, ERC165, DkargoPrefix {
     /// @dev onlyOwner
     /// @param name 물류사 이름
     function setName(string memory name) onlyOwner public {
+        emit CompanyNameSet(_name, name);
         _name = name;
     }
 
@@ -82,6 +98,7 @@ contract DkargoCompany is Operatorship, ERC165, DkargoPrefix {
     /// @dev onlyOwner
     /// @param url 물류사 URL
     function setUrl(string memory url) onlyOwner public {
+        emit CompanyUrlSet(_url, url);
         _url = url;
     }
 
@@ -89,6 +106,7 @@ contract DkargoCompany is Operatorship, ERC165, DkargoPrefix {
     /// @dev onlyOwner
     /// @param recipient 물류사 수취인 주소
     function setRecipient(address recipient) onlyOwner public {
+        emit CompanyRecipientSet(_recipient, recipient);
         _recipient = recipient;
     }
 

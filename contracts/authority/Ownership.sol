@@ -7,7 +7,9 @@ pragma solidity >=0.6.0;
 contract Ownership {
     address private _owner;
 
-    // 이벤트 선언
+    /// @notice 소유권 양도 이벤트
+    /// @param old 기존 소유자 주소
+    /// @param expected 변경될 소유자 주소
     event OwnershipTransferred(address indexed old, address indexed expected);
 
     /// @notice 소유자만 접근할 수 있음을 명시한다.
