@@ -173,6 +173,9 @@ contract DkargoService is Ownership, ERC165, DkargoPrefix {
         uint256 value = _incentives[addr].settlements;
         _incentives[addr].totals = _incentives[addr].totals.sub(_incentives[addr].settlements); // totals값 갱신
         _incentives[addr].settlements = _incentives[addr].totals; // settlements값 갱신
+        if(_incentives[addr].totals == 0 && _recipientchain.isLinked(addr) == true) {
+            _recipientchain.unlinkChain(addr); // 인센티브 수령대상자 체인 연결해제
+        }
         emit Settled(addr, value, _incentives[addr].totals);
     }
 
