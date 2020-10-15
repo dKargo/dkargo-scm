@@ -77,6 +77,7 @@ contract DkargoOrder is ERC165, DkargoPrefix {
             _tracking.push(Tracking({time: 0, member: members[i], code: codes[i], incentive: incentives[i]})); // 물류사 정보 추가
             _totalIncentives = _totalIncentives.add(incentives[0]);
         }
+        _tracking.push(Tracking({time: 0, member: members[members.length-1], code: TRACKCODE_COMPLETE, incentive: 0})); // 배송완료 상태 추가
     }
 
     /// @notice 주문 번호를 설정한다.
@@ -121,7 +122,6 @@ contract DkargoOrder is ERC165, DkargoPrefix {
             _tracking[_curstep].time = time;
             _curstep = _curstep.add(1); // 배송 step 한단계 증가 (다음 step)
             if(_curstep == _tracking.length) { // 배송 종료 시 처리
-                _tracking.push(Tracking({time: time, member: address(0), code: TRACKCODE_COMPLETE, incentive: 0})); // 배송완료 상태 추가
                 _done = true;
             }
         }
@@ -132,14 +132,21 @@ contract DkargoOrder is ERC165, DkargoPrefix {
     /// @dev 배송종료(_done == true) 상태이고, 마지막 트래킹 코드가 TRACKCODE_FAILED 여야 한다.
     /// @return 주문의 배송실패 여부 (bool), true: O, false: X
     function isFailed() public view returns(bool) {
-        return ((_done == true) && (_tracking[_curstep].code == TRACKCODE_FAILED))? (true) : (false);
+        return ((_done == true) && (_curstep < _tracking.length))? (true) : (false);
     }
 
     /// @notice 주문이 정상적으로 배송완료 되었는지의 여부를 확인한다.
-    /// @dev 배송종료(_done == true) 상태이고, 마지막 트래킹 코드가 TRACKCODE_COMPLETE 여야 한다.
+    /// @dev 배송종료(_done == true) 상태이고, 모든 트래킹이 수행 완료되어야 한다. (_curstep == _tracking.length)
     /// @return 주문의 정상 배송완료 여부 (bool), true: O, false: X
     function isComplete() public view returns(bool) {
-        return ((_done == true) && (_tracking[_curstep].code == TRACKCODE_COMPLETE))? (true) : (false);
+        return ((_done == true) && (_curstep == _tracking.length))? (true) : (false);
+    }
+
+    /// @notice 주문이 현재 LastMile 상태인지 여부를 확인한다.
+    /// @dev LastMile: 수취인에게 배송 중인 상태 (배송의 마지막 단계)
+    /// @return LastMile 상태 여부 (bool), true: O, false: X
+    function isLastMile() public view returns(bool) {
+        return ((_done == false) && (_tracking[_curstep].code == TRACKCODE_COMPLETE))? (true) : (false);
     }
 
     /// @notice 주문이 현재 처리되고 있는 구간 인덱스를 얻어온다.
