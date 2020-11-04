@@ -139,11 +139,10 @@ contract DkargoService is Ownership, ERC165, DkargoPrefix {
                 for(uint256 idx = 1; idx < trackingcnt; idx++) { // 배송에 참여한 모든 물류사들에 대해서
                     (address company, uint256 incentivee) = _getTracking(order, idx); // 물류사 주소와 인센티브 정보 추출
                     if(incentivee > 0) {
-                        address recipient = _getRecipient(company); // 물류사의 수취인 주소 추출
-                        _incentives[recipient].totals = (_incentives[recipient].totals).add(incentivee); // 물류사 인센티브 갱신
-                        emit IncentiveUpdated(recipient, incentivee); // 이벤트 발생: 인센티브 갱신 (물류사)
-                        if (_recipientchain.isLinked(recipient) == false && _incentives[recipient].totals > 0) {
-                            _recipientchain.linkChain(recipient); // 인센티브 수령대상자 체인 연결
+                        _incentives[company].totals = (_incentives[company].totals).add(incentivee); // 물류사 인센티브 갱신
+                        emit IncentiveUpdated(company, incentivee); // 이벤트 발생: 인센티브 갱신 (물류사)
+                        if (_recipientchain.isLinked(company) == false && _incentives[company].totals > 0) {
+                            _recipientchain.linkChain(company); // 인센티브 수령대상자 체인 연결
                         }
                         if (_degree[company].applied == false) {
                             _degree[company].applied = true;
