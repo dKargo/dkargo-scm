@@ -77,7 +77,6 @@ contract DkargoOrder is ERC165, DkargoPrefix {
             _tracking.push(Tracking({time: 0, member: members[i], code: codes[i], incentive: incentives[i]})); // 물류사 정보 추가
             _totalIncentives = _totalIncentives.add(incentives[0]);
         }
-        _tracking.push(Tracking({time: 0, member: members[members.length-1], code: TRACKCODE_COMPLETE, incentive: 0})); // 배송완료 상태 추가
     }
 
     /// @notice 주문 번호를 설정한다.

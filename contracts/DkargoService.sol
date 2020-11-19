@@ -18,11 +18,6 @@ contract DkargoService is Ownership, ERC165, DkargoPrefix {
     using SafeMath256 for uint256;
 
     /// @dev 구조체 정의
-    struct Degree { // 물류사가 수행한 주문 처리 결과 누계 저장용 구조체
-        bool applied; // 반영 여부 플래그 (주문 하나에 대해 여러 배송구간을 한 개의 물류사가 처리할 경우 중복처리 방지용)
-        uint256 success; // 배송 완료한 주문 개수
-        uint256 totals; // 담당 주문 총 개수
-    }
     struct Incentive { // 인센티브 정보
         uint256 totals; // 현재 받을 수 있는 인센티브 금액
         uint256 settlements; // 정산 수행 시 지급될 실제 인센티브 금액
@@ -33,7 +28,6 @@ contract DkargoService is Ownership, ERC165, DkargoPrefix {
     mapping(uint256 => address) private _orders; // "주문번호" <-> "주문 컨트랙트 주소" 매핑변수
 
     /// @dev 변수 선언(물류사)
-    mapping(address => Degree) private _degree; // "물류사주소" <-> "물류사평점" 매핑변수
     Typedef.AddressList private _companychain; // 물류사 체인
 
     /// @dev 변수 선언(인센티브)
@@ -92,16 +86,6 @@ contract DkargoService is Ownership, ERC165, DkargoPrefix {
             if (_companychain.isLinked(company) == false) { // 물류사가 등록된 물류사인지 체크
                 revert("DkargoService: the order has unregistered company");
             }
-            if (_degree[company].applied == false) {
-                _degree[company].applied = true;
-            }
-        }
-        for(uint256 idx = 1; idx < trackingcnt; idx++) { // 각 물류사의 담당 주문 총 개수 갱신
-            (address company,) = _getTracking(order, idx);
-            if (_degree[company].applied == true) {
-                _degree[company].totals = _degree[company].totals.add(1);
-                _degree[company].applied = false;
-            }
         }
         _ordercnt = _ordercnt.add(1); // 주문 컨트랙트 개수 갱신, 이 값이 현재 주문의 "주문번호"가 됨
         _orders[_ordercnt] = order; // "주문번호"에 해당하는 매퍼에 주문 컨트랙트 주소 등록
@@ -109,6 +93,15 @@ contract DkargoService is Ownership, ERC165, DkargoPrefix {
         emit OrderCreated(order, _ordercnt); // 이벤트 발생: 주문생성
         address nextMember = _getCurrentTracking(order); // 주문의 다음 배송 담당자 값 획득
         emit OrderTransferred(order, reporter, nextMember, 1); // 이벤트 발생: 주문 상태갱신
+        //// 화주 인센티브 갱신
+        (address shipper, uint256 incentive) = _getTracking(order, 0); // 화주의 주소와 인센티브 정보 추출
+        if(incentive > 0) {
+            _incentives[shipper].totals = (_incentives[shipper].totals).add(incentive); // 화주의 인센티브 갱신
+            emit IncentiveUpdated(shipper, incentive); // 이벤트 발생: 인센티브 갱신 (화주)
+            if (_recipientchain.isLinked(shipper) == false && _incentives[shipper].totals > 0) {
+                _recipientchain.linkChain(shipper); // 인센티브 수령대상자 체인 연결
+            }
+        }
     }
 
     /// @notice 주문 상태갱신을 승인한다.
@@ -125,39 +118,19 @@ contract DkargoService is Ownership, ERC165, DkargoPrefix {
         address nextMember = _getCurrentTracking(order); // 주문의 다음 배송 담당자 값 획득
         if(_isOrderFailed(order) == false) { // 차후 배송실패에 따른 패널티 적용 정책이 확정되면 _isOrderFailed(order) == true일 때의 코드 작업 추가 필요
             emit OrderTransferred(order, reporter, nextMember, transportid); // 이벤트 발생: 주문 상태갱신
-            if(_isOrderComplete(order) == true) { // 성공적으로 배송완료된 주문: 인센티브 갱신 + 물류사 평점 갱신
-                //// 화주 인센티브 갱신
-                (address shipper, uint256 incentive) = _getTracking(order, 0); // 화주의 주소와 인센티브 정보 추출
-                if(incentive > 0) {
-                    _incentives[shipper].totals = (_incentives[shipper].totals).add(incentive); // 화주의 인센티브 갱신
-                    emit IncentiveUpdated(shipper, incentive); // 이벤트 발생: 인센티브 갱신 (화주)
-                    if (_recipientchain.isLinked(shipper) == false && _incentives[shipper].totals > 0) {
-                        _recipientchain.linkChain(shipper); // 인센티브 수령대상자 체인 연결
-                    }
-                }
-                //// 물류사 인센티브 갱신 + 물류사 평점 갱신
-                for(uint256 idx = 1; idx < trackingcnt; idx++) { // 배송에 참여한 모든 물류사들에 대해서
-                    (address company, uint256 incentivee) = _getTracking(order, idx); // 물류사 주소와 인센티브 정보 추출
-                    if(incentivee > 0) {
-                        _incentives[company].totals = (_incentives[company].totals).add(incentivee); // 물류사 인센티브 갱신
-                        emit IncentiveUpdated(company, incentivee); // 이벤트 발생: 인센티브 갱신 (물류사)
-                        if (_recipientchain.isLinked(company) == false && _incentives[company].totals > 0) {
-                            _recipientchain.linkChain(company); // 인센티브 수령대상자 체인 연결
-                        }
-                        if (_degree[company].applied == false) {
-                            _degree[company].applied = true;
-                        }
-                    }
-                }
-                for(uint256 idx = 1; idx < trackingcnt; idx++) { // 배송에 참여한 모든 물류사들에 대해서
-                    (address company,) = _getTracking(order, idx);
-                    if (_degree[company].applied == true) {
-                        _degree[company].success = _degree[company].success.add(1);
-                        _degree[company].applied = false;
-                    }
+            uint256 recipientid = transportid.sub(1);
+            require(recipientid > 0, "DkargoService: Invalid transportid (approveOrderUpdate)");
+            //// 물류사 인센티브 갱신
+            (address company, uint256 incentivee) = _getTracking(order, recipientid); // 물류사 주소와 인센티브 정보 추출
+            if(incentivee > 0) {
+                _incentives[company].totals = (_incentives[company].totals).add(incentivee); // 물류사 인센티브 갱신
+                emit IncentiveUpdated(company, incentivee); // 이벤트 발생: 인센티브 갱신 (물류사)
+                if (_recipientchain.isLinked(company) == false && _incentives[company].totals > 0) {
+                    _recipientchain.linkChain(company); // 인센티브 수령대상자 체인 연결
                 }
             }
         }
+        //// Fail에 대한 처리: 보상 정책이 Fix되면 Coding 예정
     }
 
     /// @notice 물류사를 디카르고 플랫폼의 멤버로 등록한다.
@@ -191,22 +164,6 @@ contract DkargoService is Ownership, ERC165, DkargoPrefix {
             _recipientchain.unlinkChain(addr); // 인센티브 수령대상자 체인 연결해제
         }
         emit Settled(addr, value, _incentives[addr].totals);
-    }
-
-    /// @notice 디카르고 플랫폼에 등록된 물류사의 "배송완료 주문 총 개수"를 반환한다.
-    /// @dev 현재는 success 하나뿐이지만, 향후 항목이 늘어나면 array type의 return이 되어야 할 것
-    /// @param company 물류사 컨트랙트 주소
-    /// @return 물류사의 "배송완료 주문 총 개수" (uint256)
-    function completeOrders(address company) public view returns(uint256) {
-        return _degree[company].success;
-    }
-
-    /// @notice 디카르고 플랫폼에 등록된 물류사의 "담당한 주문 총 개수"를 반환한다.
-    /// @dev 현재는 success 하나뿐이지만, 향후 항목이 늘어나면 array type의 return이 되어야 할 것
-    /// @param company 물류사 컨트랙트 주소
-    /// @return 물류사의 "담당한 주문 총 개수" (uint256)
-    function totalOrders(address company) public view returns(uint256) {
-        return _degree[company].totals;
     }
 
     /// @notice 주소의 인센티브 수령 정보를 반환한다. (totals, settlements)

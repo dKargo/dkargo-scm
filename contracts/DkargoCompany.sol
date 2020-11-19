@@ -67,7 +67,7 @@ contract DkargoCompany is Operatorship, ERC165, DkargoPrefix {
         //// 물류사 관할 주문인지 아닌지 체크 (실수로 launch과정을 생략하였다면 여기서 revert될 것임)
         require(_todolist[order][transportid] == true, "DkargoCompany: unlaunched order");
         _submitUpdate(order, code);
-        if(_isOrderLastMile(order) == true) {
+        if(_isOrderLastMile(order) == true) { // "LastMile 배송 -> 배송완료" 구간은 동일 물류사 이므로 Launch 수행을 생략한다.
             uint256 tidLastmile = _getOrderCurTransportId(order);
             _todolist[order][tidLastmile] = true;
         }
